@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="cs">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AC Sparta Praha | Tactical Board</title>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+    <link rel="shortcut icon" href="favicon.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar">
+        <div class="brand-block">
+          <div>
+            <p class="eyebrow">Tactical board</p>
+            <h1>AC Sparta Praha</h1>
+          </div>
+        </div>
+
+        <div class="formation-picker" aria-label="Vyber formace">
+          <button class="formation-btn active" data-formation="4-3-3">4-3-3</button>
+          <button class="formation-btn" data-formation="4-4-2">4-4-2</button>
+          <button class="formation-btn" data-formation="3-4-3">3-4-3</button>
+          <button class="formation-btn" data-formation="4-2-3-1">4-2-3-1</button>
+        </div>
+      </header>
+
+      <main class="main-grid">
+        <section class="pitch-panel">
+          <div class="panel-header">
+            <div>
+              <p class="section-label">Rozestavení</p>
+              <h2 id="formation-name">4-3-3</h2>
+            </div>
+
+            <div class="panel-header-actions">
+              <div class="captain-picker-wrap">
+                <label class="captain-label" for="captain-select">Kapitán</label>
+                <select id="captain-select" class="captain-select" aria-label="Výběr kapitána týmu">
+                  <option value="">Vyber kapitána</option>
+                </select>
+              </div>
+
+              <button type="button" id="reset-lineup-btn" class="reset-btn" title="Odebrat všechny hráče ze sestavy">
+                Vymazat sestavu
+              </button>
+            </div>
+          </div>
+
+          <div class="pitch" id="pitch">
+            <div class="pitch-halo"></div>
+            <div class="center-circle"></div>
+            <div class="center-line"></div>
+            <div class="penalty-box left"></div>
+            <div class="penalty-box right"></div>
+            <div class="goal-box left"></div>
+            <div class="goal-box right"></div>
+            <div id="field-grid" class="field-grid" aria-hidden="true"></div>
+            <div id="field-positions" class="field-positions"></div>
+          </div>
+        </section>
+
+        <aside class="players-panel">
+          <div class="panel-header compact">
+            <div>
+              <p class="section-label">Sestava</p>
+              <h2>Seznam hráčů</h2>
+            </div>
+          </div>
+
+          <div id="players-list" class="players-list" aria-live="polite"></div>
+        </aside>
+      </main>
+    </div>
+
+    <div id="drag-preview" class="drag-preview" aria-hidden="true">
+      <img id="drag-preview-photo" class="drag-preview-photo" src="" alt="" />
+      <span id="drag-preview-name" class="drag-preview-name"></span>
+    </div>
+
+    <script src="data.js"></script>
+    <script src="script.js"></script>
+  </body>
+</html>
