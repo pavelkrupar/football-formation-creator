@@ -15,6 +15,7 @@ let selectedPlayerId = null;
 const slotAssignments = {};
 let selectedClubs = new Set(clubs.map((club) => club.id));
 let currentLanguage = DEFAULT_LANGUAGE;
+let searchQuery = '';
 
 const STORAGE_KEY = 'sparta-tactical-board:v1';
 
@@ -28,14 +29,13 @@ const playersList = document.getElementById('players-list');
 const formationButtons = document.querySelectorAll('.formation-btn');
 const formationPickerEl = document.getElementById('formation-picker');
 const captainSelect = document.getElementById('captain-select');
-const captainLabelEl = document.getElementById('captain-label');
 const resetButton = document.getElementById('reset-lineup-btn');
 const dragPreview = document.getElementById('drag-preview');
 const dragPreviewPhoto = document.getElementById('drag-preview-photo');
 const dragPreviewName = document.getElementById('drag-preview-name');
 const clubFilterEl = document.getElementById('club-filter');
+const playerSearchEl = document.getElementById('player-search');
 const appTitleEl = document.getElementById('app-title');
-const lineupSectionLabelEl = document.getElementById('lineup-section-label');
 const lineupHeadingEl = document.getElementById('lineup-heading');
 const appFooterEl = document.getElementById('app-footer');
 const langPickerEl = document.getElementById('lang-picker');
@@ -61,6 +61,20 @@ function t(key) {
 
 function tGroup(groupLabel) {
   return t('groupLabels')[groupLabel] ?? groupLabel;
+}
+
+function normalizeForSearch(value) {
+  // Diacritics-insensitive so e.g. "zeleny" still matches "Zelený".
+  return String(value || '')
+    .normalize('NFD')
+    .replace(/\p{Diacritic}/gu, '')
+    .toLowerCase();
+}
+
+function matchesSearchQuery(player) {
+  const query = normalizeForSearch(searchQuery);
+  if (!query) return true;
+  return normalizeForSearch(player.name).includes(query);
 }
 
 function getClubById(clubId) {
@@ -257,7 +271,7 @@ function renderClubFilter() {
 function renderPlayers() {
   playersList.innerHTML = Object.entries(playersByPosition)
     .map(([groupLabel, groupPlayers]) => {
-      const visiblePlayers = groupPlayers.filter((player) => selectedClubs.has(player.club));
+      const visiblePlayers = groupPlayers.filter((player) => selectedClubs.has(player.club) && matchesSearchQuery(player));
       if (visiblePlayers.length === 0) return '';
 
       const sortedGroupPlayers = sortPlayersByNumber(visiblePlayers);
@@ -372,15 +386,17 @@ function applyStaticText() {
   if (appTitleEl) appTitleEl.textContent = t('appName');
   if (formationPickerEl) formationPickerEl.setAttribute('aria-label', t('formationPickerLabel'));
   if (langPickerEl) langPickerEl.setAttribute('aria-label', t('languagePickerLabel'));
-  if (captainLabelEl) captainLabelEl.textContent = t('captainLabel');
   if (captainSelect) captainSelect.setAttribute('aria-label', t('captainSelectLabel'));
   if (resetButton) {
     resetButton.textContent = t('resetButton');
     resetButton.title = t('resetButtonTitle');
   }
   if (clubFilterEl) clubFilterEl.setAttribute('aria-label', t('clubFilterLabel'));
-  if (lineupSectionLabelEl) lineupSectionLabelEl.textContent = t('lineupSectionLabel');
   if (lineupHeadingEl) lineupHeadingEl.textContent = t('playerListHeading');
+  if (playerSearchEl) {
+    playerSearchEl.setAttribute('aria-label', t('playerSearchLabel'));
+    playerSearchEl.placeholder = t('playerSearchPlaceholder');
+  }
   if (appFooterEl) appFooterEl.textContent = t('footer');
 }
 
@@ -594,6 +610,13 @@ if (clubFilterEl) {
 
     pruneAssignmentsForClubFilter();
     render();
+  });
+}
+
+if (playerSearchEl) {
+  playerSearchEl.addEventListener('input', (event) => {
+    searchQuery = event.target.value;
+    renderPlayers();
   });
 }
 

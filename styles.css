@@ -4,7 +4,6 @@
   --bg-3: #121d28;
   --line: rgba(165, 181, 194, 0.13);
   --text: #edf6ff;
-  --muted: rgba(237, 246, 255, 0.68);
   --red: #ee3b3b;
   --grass-1: #1e9b52;
   --grass-2: #0e713d;
@@ -74,14 +73,6 @@ button {
   display: flex;
   align-items: center;
   gap: 10px;
-}
-
-.section-label {
-  margin: 0 0 3px;
-  font-size: 0.54rem;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--muted);
 }
 
 h1, h2 {
@@ -196,14 +187,6 @@ h2 {
 .reset-btn:disabled {
   opacity: 0.4;
   cursor: not-allowed;
-}
-
-.captain-label {
-  margin: 0;
-  font-size: 0.54rem;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--muted);
 }
 
 .captain-select {
@@ -670,6 +653,30 @@ h2 {
   clip: rect(0, 0, 0, 0);
   white-space: nowrap;
   border: 0;
+}
+
+.player-search {
+  width: 100%;
+  padding: 9px 12px;
+  margin-bottom: 10px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(17, 24, 31, 0.9);
+  color: var(--text);
+  font-family: inherit;
+  font-size: 0.78rem;
+  font-weight: 600;
+  outline: none;
+  transition: 0.15s ease;
+}
+
+.player-search::placeholder {
+  color: rgba(237, 246, 255, 0.4);
+}
+
+.player-search:focus {
+  border-color: rgba(126, 216, 255, 0.5);
+  box-shadow: 0 0 0 3px rgba(126, 216, 255, 0.12);
 }
 
 .players-list {

@@ -41,7 +41,6 @@
 
             <div class="panel-header-actions">
               <div class="captain-picker-wrap">
-                <label class="captain-label" id="captain-label" for="captain-select">Captain</label>
                 <select id="captain-select" class="captain-select" aria-label="Pick team captain">
                   <option value="">Pick a captain</option>
                 </select>
@@ -69,12 +68,13 @@
         <aside class="players-panel">
           <div class="panel-header compact">
             <div>
-              <p class="section-label" id="lineup-section-label">Lineup</p>
               <h2 id="lineup-heading">Player list</h2>
             </div>
           </div>
 
           <div id="club-filter" class="club-filter" role="group" aria-label="Team filter"></div>
+
+          <input type="search" id="player-search" class="player-search" placeholder="Search players..." aria-label="Search players" />
 
           <div id="players-list" class="players-list" aria-live="polite"></div>
         </aside>
