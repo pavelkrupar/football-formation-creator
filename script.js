@@ -13,6 +13,8 @@ let draggedPlayerId = null;
 let captainPlayerId = null;
 let selectedPlayerId = null;
 const slotAssignments = {};
+let selectedClubs = new Set(clubs.map((club) => club.id));
+let currentLanguage = DEFAULT_LANGUAGE;
 
 const STORAGE_KEY = 'sparta-tactical-board:v1';
 
@@ -24,12 +26,20 @@ const fieldPositions = document.getElementById('field-positions');
 const fieldGrid = document.getElementById('field-grid');
 const playersList = document.getElementById('players-list');
 const formationButtons = document.querySelectorAll('.formation-btn');
-const formationName = document.getElementById('formation-name');
+const formationPickerEl = document.getElementById('formation-picker');
 const captainSelect = document.getElementById('captain-select');
+const captainLabelEl = document.getElementById('captain-label');
 const resetButton = document.getElementById('reset-lineup-btn');
 const dragPreview = document.getElementById('drag-preview');
 const dragPreviewPhoto = document.getElementById('drag-preview-photo');
 const dragPreviewName = document.getElementById('drag-preview-name');
+const clubFilterEl = document.getElementById('club-filter');
+const appTitleEl = document.getElementById('app-title');
+const lineupSectionLabelEl = document.getElementById('lineup-section-label');
+const lineupHeadingEl = document.getElementById('lineup-heading');
+const appFooterEl = document.getElementById('app-footer');
+const langPickerEl = document.getElementById('lang-picker');
+const langButtons = document.querySelectorAll('.lang-btn');
 
 // ============================================================
 // Helpers
@@ -45,8 +55,25 @@ function normalizePosition(position) {
   return String(position || '').trim().toUpperCase();
 }
 
+function t(key) {
+  return translations[currentLanguage]?.[key] ?? translations[DEFAULT_LANGUAGE][key];
+}
+
+function tGroup(groupLabel) {
+  return t('groupLabels')[groupLabel] ?? groupLabel;
+}
+
+function getClubById(clubId) {
+  return clubs.find((club) => club.id === clubId);
+}
+
+function getPlayerClub(player) {
+  return getClubById(player?.club) || clubs[0];
+}
+
 function getPlayerPhoto(player) {
-  return player?.photo || 'img/surovcik.webp';
+  // Players without a dedicated photo fall back to their club's logo.
+  return player?.photo || getPlayerClub(player).logo;
 }
 
 function getPositionDisplayName(position) {
@@ -110,12 +137,12 @@ function getPositionFamily(position) {
 function getSlotLabelById(slotId) {
   const slots = formations[activeFormation] || [];
   const slot = slots.find((item) => item.id === slotId);
-  return slot ? slot.label : 'Volný';
+  return slot ? slot.label : null;
 }
 
 function getFormattedSlotLabel(slotId) {
   const slotLabel = getSlotLabelById(slotId);
-  if (slotLabel === 'Volný') return 'Volný';
+  if (!slotLabel) return t('emptySlot');
   return getPositionDisplayName(slotLabel);
 }
 
@@ -210,16 +237,37 @@ function renderCoordinateGrid() {
   fieldGrid.innerHTML = lines.join('');
 }
 
+function renderClubFilter() {
+  if (!clubFilterEl) return;
+
+  clubFilterEl.innerHTML = clubs
+    .map((club) => {
+      const checked = selectedClubs.has(club.id);
+      return `
+        <label class="club-chip ${checked ? 'active' : ''}">
+          <input type="checkbox" class="club-chip-checkbox" value="${club.id}" ${checked ? 'checked' : ''} />
+          <img class="club-chip-logo" src="${club.logo}" alt="" />
+          <span class="club-chip-name">${club.name}</span>
+        </label>
+      `;
+    })
+    .join('');
+}
+
 function renderPlayers() {
   playersList.innerHTML = Object.entries(playersByPosition)
     .map(([groupLabel, groupPlayers]) => {
-      const sortedGroupPlayers = sortPlayersByNumber(groupPlayers);
+      const visiblePlayers = groupPlayers.filter((player) => selectedClubs.has(player.club));
+      if (visiblePlayers.length === 0) return '';
+
+      const sortedGroupPlayers = sortPlayersByNumber(visiblePlayers);
       const items = sortedGroupPlayers
         .map((player) => {
           const currentSlotId = findPlayerSlot(player.id);
-          const slotLabel = currentSlotId ? getFormattedSlotLabel(currentSlotId) : 'Volný';
+          const slotLabel = currentSlotId ? getFormattedSlotLabel(currentSlotId) : t('emptySlot');
           const isSelected = selectedPlayerId === player.id;
           const playerNumber = player.number ?? '';
+          const club = getPlayerClub(player);
 
           return `
             <div class="player-card ${currentSlotId ? 'is-assigned' : ''} ${isSelected ? 'is-selected' : ''}" draggable="true" data-player-id="${player.id}">
@@ -232,7 +280,7 @@ function renderPlayers() {
               </div>
               <div class="player-side-actions">
                 <span class="assignment-chip">${slotLabel}</span>
-                <img class="roster-sparta-mark" src="img/sparta.svg" alt="Sparta logo" />
+                <img class="roster-club-mark" src="${club.logo}" alt="${club.name} logo" />
               </div>
             </div>
           `;
@@ -241,7 +289,7 @@ function renderPlayers() {
 
       return `
         <div class="position-group">
-          <div class="group-title">${groupLabel}</div>
+          <div class="group-title">${tGroup(groupLabel)}</div>
           ${items}
         </div>
       `;
@@ -252,11 +300,8 @@ function renderPlayers() {
 function renderFormation() {
   if (!formations[activeFormation]) {
     fieldPositions.innerHTML = '';
-    formationName.textContent = 'Nezjištěno';
     return;
   }
-
-  formationName.textContent = activeFormation;
 
   const slots = formations[activeFormation];
 
@@ -270,11 +315,12 @@ function renderFormation() {
       const slotDisplayLabel = getPositionDisplayName(slot.label);
       const isCaptain = Boolean(captainPlayerId && assignedPlayer && assignedPlayer.id === captainPlayerId);
       const nameSizeClass = getSlotPlayerNameSizeClass(assignedPlayer?.name);
+      const club = assignedPlayer ? getPlayerClub(assignedPlayer) : null;
 
       return `
         <div class="pitch-slot is-${slotStatus}" data-slot-id="${slot.id}" data-slot-label="${slot.label}" data-player-id="${assignedPlayer ? assignedPlayer.id : ''}" draggable="${assignedPlayer ? 'true' : 'false'}" style="left: ${slot.x}%; top: ${slot.y}%">
           ${isCaptain ? '<span class="captain-mark">C</span>' : ''}
-          ${assignedPlayer ? '<span class="sparta-mark"><img src="img/sparta.svg" alt="Sparta logo" /></span>' : ''}
+          ${assignedPlayer ? `<span class="club-mark"><img src="${club.logo}" alt="${club.name} logo" /></span>` : ''}
           <span class="slot-label">${slotDisplayLabel}</span>
           <div class="slot-player ${nameSizeClass}">
             ${assignedPlayer ? `<img class="slot-player-image" src="${playerPhoto}" alt="${assignedPlayer.name}" />` : ''}
@@ -296,13 +342,13 @@ function renderCaptainSelector() {
   }
 
   if (assignedPlayers.length === 0) {
-    captainSelect.innerHTML = '<option value="">Vyber kapitána</option><option value="" disabled>Žádný hráč v sestavě</option>';
+    captainSelect.innerHTML = `<option value="">${t('captainPlaceholder')}</option><option value="" disabled>${t('captainEmptyOption')}</option>`;
     captainSelect.disabled = true;
     captainSelect.value = '';
     return;
   }
 
-  const options = ['<option value="">Vyber kapitána</option>'].concat(
+  const options = [`<option value="">${t('captainPlaceholder')}</option>`].concat(
     assignedPlayers.map((player) => {
       const selected = captainPlayerId === player.id ? 'selected' : '';
       return `<option value="${player.id}" ${selected}>${player.name}</option>`;
@@ -319,7 +365,28 @@ function updateResetButtonState() {
   resetButton.disabled = !Object.values(slotAssignments).some(Boolean);
 }
 
+function applyStaticText() {
+  document.documentElement.lang = currentLanguage;
+  document.title = t('appName');
+
+  if (appTitleEl) appTitleEl.textContent = t('appName');
+  if (formationPickerEl) formationPickerEl.setAttribute('aria-label', t('formationPickerLabel'));
+  if (langPickerEl) langPickerEl.setAttribute('aria-label', t('languagePickerLabel'));
+  if (captainLabelEl) captainLabelEl.textContent = t('captainLabel');
+  if (captainSelect) captainSelect.setAttribute('aria-label', t('captainSelectLabel'));
+  if (resetButton) {
+    resetButton.textContent = t('resetButton');
+    resetButton.title = t('resetButtonTitle');
+  }
+  if (clubFilterEl) clubFilterEl.setAttribute('aria-label', t('clubFilterLabel'));
+  if (lineupSectionLabelEl) lineupSectionLabelEl.textContent = t('lineupSectionLabel');
+  if (lineupHeadingEl) lineupHeadingEl.textContent = t('playerListHeading');
+  if (appFooterEl) appFooterEl.textContent = t('footer');
+}
+
 function render() {
+  applyStaticText();
+  renderClubFilter();
   renderFormation();
   renderPlayers();
   renderCaptainSelector();
@@ -339,6 +406,12 @@ function syncFormationButtons() {
     const isAvailable = names.includes(button.dataset.formation);
     button.hidden = !isAvailable;
     button.classList.toggle('active', button.dataset.formation === activeFormation && isAvailable);
+  });
+}
+
+function syncLangButtons() {
+  langButtons.forEach((button) => {
+    button.classList.toggle('active', button.dataset.lang === currentLanguage);
   });
 }
 
@@ -370,6 +443,15 @@ function assignPlayerToSlot(playerId, targetSlotId) {
   render();
 }
 
+function pruneAssignmentsForClubFilter() {
+  Object.entries(slotAssignments).forEach(([slotId, playerId]) => {
+    const player = getPlayerById(playerId);
+    if (!player || !selectedClubs.has(player.club)) {
+      delete slotAssignments[slotId];
+    }
+  });
+}
+
 function resetLineup() {
   Object.keys(slotAssignments).forEach((slotId) => {
     delete slotAssignments[slotId];
@@ -393,7 +475,9 @@ function saveState() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify({
       activeFormation,
       slotAssignments,
-      captainPlayerId
+      captainPlayerId,
+      selectedClubs: [...selectedClubs],
+      language: currentLanguage
     }));
   } catch (error) {
     // Storage unavailable (e.g. private browsing, quota) — ignore.
@@ -411,13 +495,25 @@ function loadState() {
       activeFormation = saved.activeFormation;
     }
 
+    if (saved.language && translations[saved.language]) {
+      currentLanguage = saved.language;
+    }
+
+    if (Array.isArray(saved.selectedClubs)) {
+      const validClubIds = saved.selectedClubs.filter((clubId) => getClubById(clubId));
+      if (validClubIds.length > 0) {
+        selectedClubs = new Set(validClubIds);
+      }
+    }
+
     const validSlotIds = new Set((formations[activeFormation] || []).map((slot) => slot.id));
     const usedPlayerIds = new Set();
 
     if (saved.slotAssignments && typeof saved.slotAssignments === 'object') {
       Object.entries(saved.slotAssignments).forEach(([slotId, playerId]) => {
         if (!validSlotIds.has(slotId)) return;
-        if (!getPlayerById(playerId)) return;
+        const player = getPlayerById(playerId);
+        if (!player || !selectedClubs.has(player.club)) return;
         if (usedPlayerIds.has(playerId)) return;
 
         slotAssignments[slotId] = playerId;
@@ -465,8 +561,39 @@ if (captainSelect) {
 if (resetButton) {
   resetButton.addEventListener('click', () => {
     if (!Object.values(slotAssignments).some(Boolean)) return;
-    if (!window.confirm('Opravdu chceš vymazat celou sestavu?')) return;
+    if (!window.confirm(t('resetConfirm'))) return;
     resetLineup();
+  });
+}
+
+langButtons.forEach((button) => {
+  button.addEventListener('click', () => {
+    if (!translations[button.dataset.lang]) return;
+    currentLanguage = button.dataset.lang;
+    syncLangButtons();
+    render();
+  });
+});
+
+if (clubFilterEl) {
+  clubFilterEl.addEventListener('change', (event) => {
+    const checkbox = event.target.closest('.club-chip-checkbox');
+    if (!checkbox) return;
+
+    const clubId = checkbox.value;
+
+    if (checkbox.checked) {
+      selectedClubs.add(clubId);
+    } else if (selectedClubs.size > 1) {
+      selectedClubs.delete(clubId);
+    } else {
+      // Always keep at least one club selected.
+      checkbox.checked = true;
+      return;
+    }
+
+    pruneAssignmentsForClubFilter();
+    render();
   });
 }
 
@@ -585,4 +712,5 @@ document.addEventListener('click', (event) => {
 loadState();
 renderCoordinateGrid();
 syncFormationButtons();
+syncLangButtons();
 render();

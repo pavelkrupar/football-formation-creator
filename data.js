@@ -1,10 +1,14 @@
 // ============================================================
 // Data
 // ============================================================
-// Squad roster and formation layouts, kept separate from script.js
-// so updating the squad (transfers, new formation) never touches
-// interaction/rendering logic. Loaded as a plain <script> before
-// script.js, so these are shared globals — no bundler in this project.
+// Squad roster (`playersByPosition`, `players`), club list (`clubs`)
+// and formation layouts (`formations`) live in data.js, loaded
+// before script.js.
+
+const clubs = [
+  { id: 'sparta', name: 'Sparta', logo: 'img/sparta.svg' },
+  { id: 'slavia', name: 'Slavia', logo: 'img/slavia.png' }
+];
 
 const formations = {
   '4-3-3': [
@@ -63,48 +67,75 @@ const formations = {
 
 const playersByPosition = {
   'Brankáři': [
-    { id: 'p1', number: 44, name: 'Jakub Surovčík', role: 'GK', optimalPositions: ['GK'], compatiblePositions: ['GK'], photo: 'img/surovcik.webp' },
-    { id: 'p2', number: 47, name: 'Krisztián Hegyi', role: 'GK', optimalPositions: ['GK'], compatiblePositions: ['GK'], photo: 'img/hegyi.webp' }
+    { id: 'p1', club: 'sparta', number: 44, name: 'Jakub Surovčík', role: 'GK', optimalPositions: ['GK'], compatiblePositions: ['GK'], photo: 'img/surovcik.webp' },
+    { id: 'p2', club: 'sparta', number: 47, name: 'Krisztián Hegyi', role: 'GK', optimalPositions: ['GK'], compatiblePositions: ['GK'], photo: 'img/hegyi.webp' },
+    { id: 's1', club: 'slavia', number: 1, name: 'Ondřej Kolář', role: 'GK', optimalPositions: ['GK'], compatiblePositions: ['GK'], photo: 'img/slavia/kolar.png' },
+    { id: 's2', club: 'slavia', number: 29, name: 'Nazar Domchak', role: 'GK', optimalPositions: ['GK'], compatiblePositions: ['GK'], photo: 'img/slavia/domchak.png' },
+    { id: 's3', club: 'slavia', number: 35, name: 'Jakub Markovič', role: 'GK', optimalPositions: ['GK'], compatiblePositions: ['GK'], photo: 'img/slavia/markovic.png' },
+    { id: 's4', club: 'slavia', number: 36, name: 'Jindřich Staněk', role: 'GK', optimalPositions: ['GK'], compatiblePositions: ['GK'], photo: 'img/slavia/stanek.png' }
   ],
   'Obránci': [
-    { id: 'p3', number: 2, name: 'Martin Suchomel', role: 'RB', optimalPositions: ['LB', 'RB', 'LWB', 'RWB'], compatiblePositions: ['LM', 'RM'], photo: 'img/suchomel.webp' },
-    { id: 'p4', number: 3, name: 'Pavel Kadeřábek', role: 'RB', optimalPositions: ['RB', 'RWB'], compatiblePositions: ['RM'], photo: 'img/kaderabek.webp' },
-    { id: 'p5', number: 4, name: 'Jakub Martinec', role: 'CB', optimalPositions: ['CB'], compatiblePositions: ['CB'], photo: 'img/martinec.webp' },
-    { id: 'p6', number: 6, name: 'Tobias Guddal', role: 'CB', optimalPositions: ['CB'], compatiblePositions: [], photo: 'img/guddal.webp' },
-    { id: 'p7', number: 11, name: 'Matěj Ryneš', role: 'LB', optimalPositions: ['LB', 'LWB'], compatiblePositions: ['LM'], photo: 'img/rynes.webp' },
-    { id: 'p8', number: 15, name: 'Viktor Vitályos', role: 'CB', optimalPositions: ['CB'], compatiblePositions: ['LB'], photo: 'img/vitalyos.webp' },
-    { id: 'p9', number: 16, name: 'Emmanuel Uchenna', role: 'CB', optimalPositions: ['CB'], compatiblePositions: [], photo: 'img/uchenna.webp' },
-    { id: 'p10', number: 19, name: 'Adam Ševínský', role: 'CB', optimalPositions: ['CB'], compatiblePositions: [], photo: 'img/sevinsky.webp' },
-    { id: 'p11', number: 30, name: 'Jaroslav Zelený', role: 'LB', optimalPositions: ['LB', 'LWB', 'CB'], compatiblePositions: ['LM'], photo: 'img/zeleny.webp' },
-    { id: 'p12', number: 33, name: 'Elias Cobbaut', role: 'CB', optimalPositions: ['CB'], compatiblePositions: [], photo: 'img/cobbaut.png' }
+    { id: 'p3', club: 'sparta', number: 2, name: 'Martin Suchomel', role: 'RB', optimalPositions: ['LB', 'RB', 'LWB', 'RWB'], compatiblePositions: ['LM', 'RM'], photo: 'img/suchomel.webp' },
+    { id: 'p4', club: 'sparta', number: 3, name: 'Pavel Kadeřábek', role: 'RB', optimalPositions: ['RB', 'RWB'], compatiblePositions: ['RM'], photo: 'img/kaderabek.webp' },
+    { id: 'p5', club: 'sparta', number: 4, name: 'Jakub Martinec', role: 'CB', optimalPositions: ['CB'], compatiblePositions: ['CB'], photo: 'img/martinec.webp' },
+    { id: 'p6', club: 'sparta', number: 6, name: 'Tobias Guddal', role: 'CB', optimalPositions: ['CB'], compatiblePositions: [], photo: 'img/guddal.webp' },
+    { id: 'p7', club: 'sparta', number: 11, name: 'Matěj Ryneš', role: 'LB', optimalPositions: ['LB', 'LWB'], compatiblePositions: ['LM'], photo: 'img/rynes.webp' },
+    { id: 'p8', club: 'sparta', number: 15, name: 'Viktor Vitályos', role: 'CB', optimalPositions: ['CB'], compatiblePositions: ['LB'], photo: 'img/vitalyos.webp' },
+    { id: 'p9', club: 'sparta', number: 16, name: 'Emmanuel Uchenna', role: 'CB', optimalPositions: ['CB'], compatiblePositions: [], photo: 'img/uchenna.webp' },
+    { id: 'p10', club: 'sparta', number: 19, name: 'Adam Ševínský', role: 'CB', optimalPositions: ['CB'], compatiblePositions: [], photo: 'img/sevinsky.webp' },
+    { id: 'p11', club: 'sparta', number: 30, name: 'Jaroslav Zelený', role: 'LB', optimalPositions: ['LB', 'LWB', 'CB'], compatiblePositions: ['LM'], photo: 'img/zeleny.webp' },
+    { id: 'p12', club: 'sparta', number: 33, name: 'Elias Cobbaut', role: 'CB', optimalPositions: ['CB'], compatiblePositions: [], photo: 'img/cobbaut.png' },
+    { id: 's5', club: 'slavia', number: 2, name: 'Štěpán Chaloupek', role: 'CB', optimalPositions: ['CB'], compatiblePositions: ['RB'], photo: 'img/slavia/chaloupek.png' },
+    { id: 's6', club: 'slavia', number: 3, name: 'Tomáš Holeš', role: 'CB', optimalPositions: ['CB'], compatiblePositions: ['RB'], photo: 'img/slavia/holes.png' },
+    { id: 's7', club: 'slavia', number: 4, name: 'David Zima', role: 'CB', optimalPositions: ['CB'], compatiblePositions: [], photo: 'img/slavia/zima.png' },
+    { id: 's8', club: 'slavia', number: 5, name: 'Igoh Ogbu', role: 'CB', optimalPositions: ['CB'], compatiblePositions: [], photo: 'img/slavia/ogbu.png' },
+    { id: 's9', club: 'slavia', number: 6, name: "Ange N'Guessan", role: 'CB', optimalPositions: ['CB'], compatiblePositions: [], photo: 'img/slavia/nguessan.png' },
+    { id: 's10', club: 'slavia', number: 14, name: 'Samuel Isife', role: 'RB', optimalPositions: ['RB', 'RWB'], compatiblePositions: ['RM'], photo: 'img/slavia/isife.png' },
+    { id: 's11', club: 'slavia', number: 27, name: 'Tomáš Vlček', role: 'CB', optimalPositions: ['CB'], compatiblePositions: [], photo: 'img/slavia/vlcek.png' },
+    { id: 's12', club: 'slavia', number: 33, name: 'Denis Halinský', role: 'CB', optimalPositions: ['CB'], compatiblePositions: [], photo: 'img/slavia/halinsky.png' },
+    { id: 's13', club: 'slavia', number: 39, name: 'David Jurásek', role: 'LB', optimalPositions: ['LB', 'LWB'], compatiblePositions: ['LM'], photo: 'img/slavia/jurasek.png' },
+    { id: 's14', club: 'slavia', number: 41, name: 'Sahmkou Camara', role: 'CB', optimalPositions: ['CB'], compatiblePositions: [], photo: 'img/slavia/camara.png' },
+    { id: 's15', club: 'slavia', number: 42, name: 'Mikuláš Konečný', role: 'CB', optimalPositions: ['CB'], compatiblePositions: [], photo: 'img/slavia/konecny.png' },
+    { id: 's16', club: 'slavia', number: 43, name: 'Eliáš Piták', role: 'RB', optimalPositions: ['RB', 'RWB'], compatiblePositions: ['RM'], photo: 'img/slavia/pitak.png' }
   ],
   'Záložníci': [
-    { id: 'p13', number: 5, name: 'Santiago Eneme', role: 'CM', optimalPositions: ['CM'], compatiblePositions: ['OM', 'DM'], photo: 'img/eneme.webp' },
-    { id: 'p14', number: 7, name: 'Josimar Alcócer', role: 'LW', optimalPositions: ['LW'], compatiblePositions: ['RW'], photo: 'img/alcocer.webp' },
-    { id: 'p15', number: 8, name: 'Magnus Kofod Andersen', role: 'CM', optimalPositions: ['CM'], compatiblePositions: ['DM'], photo: 'img/andersen.webp' },
-    { id: 'p16', number: 10, name: 'Adam Karabec', role: 'OM', optimalPositions: ['OM'], compatiblePositions: ['CM'], photo: 'img/karabec.webp' },
-    { id: 'p17', number: 17, name: 'John Mercado', role: 'RW', optimalPositions: ['RW'], compatiblePositions: ['LW', 'OM'], photo: 'img/mercado.webp' },
-    { id: 'p18', number: 18, name: 'Andrew Irving', role: 'CM', optimalPositions: ['CM'], compatiblePositions: ['DM', 'OM'], photo: 'img/irving.webp' },
-    { id: 'p19', number: 20, name: 'Sivert Mannsverk', role: 'DM', optimalPositions: ['DM'], compatiblePositions: ['CM'], photo: 'img/mannsverk.webp' },
-    { id: 'p20', number: 21, name: 'Joao Grimaldo', role: 'LW', optimalPositions: ['LW', 'RW'], compatiblePositions: ['OM'], photo: 'img/grimaldo.webp' },
-    { id: 'p21', number: 24, name: 'Dominik Hollý', role: 'CM', optimalPositions: ['CM'], compatiblePositions: ['LW', 'OM'], photo: 'img/holly.webp' },
-    { id: 'p22', number: 26, name: 'Patrik Vydra', role: 'DM', optimalPositions: ['DM'], compatiblePositions: ['CB', 'CM'], photo: 'img/vydra.webp' },
-    { id: 'p23', number: 27, name: 'Ebrima Singhateh', role: 'LW', optimalPositions: ['LW', 'CF', 'RW'], compatiblePositions: [], photo: 'img/singhateh.webp' },
-    { id: 'p24', number: 28, name: 'Roman Macek', role: 'CM', optimalPositions: ['CM', 'DM'], compatiblePositions: [], photo: 'img/macek.webp' },
-    { id: 'p25', number: 31, name: 'Matěj Jurásek', role: 'LW', optimalPositions: ['LW', 'RW'], compatiblePositions: [], photo: 'img/matej-jurasek.webp' },
-    { id: 'p26', number: 36, name: 'Garang Kuol', role: 'LW', optimalPositions: ['LW', 'RW'], compatiblePositions: [], photo: 'img/kuol.webp' },
-    { id: 'p27', number: 38, name: 'Hugo Sochůrek', role: 'CM', optimalPositions: ['CM'], compatiblePositions: ['OM', 'DM'], photo: 'img/sochurek.webp' },
-    { id: 'p28', number: 52, name: 'Ondřej Penxa', role: 'LW', optimalPositions: ['LW', 'RW'], compatiblePositions: [], photo: 'img/penxa.webp' }
+    { id: 'p13', club: 'sparta', number: 5, name: 'Santiago Eneme', role: 'CM', optimalPositions: ['CM'], compatiblePositions: ['OM', 'DM'], photo: 'img/eneme.webp' },
+    { id: 'p14', club: 'sparta', number: 7, name: 'Josimar Alcócer', role: 'LW', optimalPositions: ['LW'], compatiblePositions: ['RW'], photo: 'img/alcocer.webp' },
+    { id: 'p15', club: 'sparta', number: 8, name: 'Magnus Kofod Andersen', role: 'CM', optimalPositions: ['CM'], compatiblePositions: ['DM'], photo: 'img/andersen.webp' },
+    { id: 'p16', club: 'sparta', number: 10, name: 'Adam Karabec', role: 'OM', optimalPositions: ['OM'], compatiblePositions: ['CM'], photo: 'img/karabec.webp' },
+    { id: 'p17', club: 'sparta', number: 17, name: 'John Mercado', role: 'RW', optimalPositions: ['RW'], compatiblePositions: ['LW', 'OM'], photo: 'img/mercado.webp' },
+    { id: 'p18', club: 'sparta', number: 18, name: 'Andrew Irving', role: 'CM', optimalPositions: ['CM'], compatiblePositions: ['DM', 'OM'], photo: 'img/irving.webp' },
+    { id: 'p19', club: 'sparta', number: 20, name: 'Sivert Mannsverk', role: 'DM', optimalPositions: ['DM'], compatiblePositions: ['CM'], photo: 'img/mannsverk.webp' },
+    { id: 'p20', club: 'sparta', number: 21, name: 'Joao Grimaldo', role: 'LW', optimalPositions: ['LW', 'RW'], compatiblePositions: ['OM'], photo: 'img/grimaldo.webp' },
+    { id: 'p21', club: 'sparta', number: 24, name: 'Dominik Hollý', role: 'CM', optimalPositions: ['CM'], compatiblePositions: ['LW', 'OM'], photo: 'img/holly.webp' },
+    { id: 'p22', club: 'sparta', number: 26, name: 'Patrik Vydra', role: 'DM', optimalPositions: ['DM'], compatiblePositions: ['CB', 'CM'], photo: 'img/vydra.webp' },
+    { id: 'p23', club: 'sparta', number: 27, name: 'Ebrima Singhateh', role: 'LW', optimalPositions: ['LW', 'CF', 'RW'], compatiblePositions: [], photo: 'img/singhateh.webp' },
+    { id: 'p24', club: 'sparta', number: 28, name: 'Roman Macek', role: 'CM', optimalPositions: ['CM', 'DM'], compatiblePositions: [], photo: 'img/macek.webp' },
+    { id: 'p25', club: 'sparta', number: 31, name: 'Matěj Jurásek', role: 'LW', optimalPositions: ['LW', 'RW'], compatiblePositions: [], photo: 'img/matej-jurasek.webp' },
+    { id: 'p26', club: 'sparta', number: 36, name: 'Garang Kuol', role: 'LW', optimalPositions: ['LW', 'RW'], compatiblePositions: [], photo: 'img/kuol.webp' },
+    { id: 'p27', club: 'sparta', number: 38, name: 'Hugo Sochůrek', role: 'CM', optimalPositions: ['CM'], compatiblePositions: ['OM', 'DM'], photo: 'img/sochurek.webp' },
+    { id: 'p28', club: 'sparta', number: 52, name: 'Ondřej Penxa', role: 'LW', optimalPositions: ['LW', 'RW'], compatiblePositions: [], photo: 'img/penxa.webp' },
+    { id: 's17', club: 'slavia', number: 8, name: 'Oskar Kubiak', role: 'LM', optimalPositions: ['LM'], compatiblePositions: ['LB'], photo: 'img/slavia/kobiak.png' },
+    { id: 's18', club: 'slavia', number: 10, name: 'Danijel Šturm', role: 'LW', optimalPositions: ['LW', 'RW'], compatiblePositions: ['CF'], photo: 'img/slavia/sturm.png' },
+    { id: 's19', club: 'slavia', number: 11, name: 'Youssoupha Sanyang', role: 'LW', optimalPositions: ['LW'], compatiblePositions: ['RW'], photo: 'img/slavia/sanyang.png' },
+    { id: 's20', club: 'slavia', number: 15, name: 'Mubarak Suleiman', role: 'CM', optimalPositions: ['CM'], compatiblePositions: ['DM'], photo: 'img/slavia/suleiman.png' },
+    { id: 's21', club: 'slavia', number: 16, name: 'David Moses', role: 'CM', optimalPositions: ['CM'], compatiblePositions: ['OM'], photo: 'img/slavia/moses.png' },
+    { id: 's22', club: 'slavia', number: 17, name: 'Lukáš Provod', role: 'OM', optimalPositions: ['OM', 'LW'], compatiblePositions: ['CM'], photo: 'img/slavia/provod.png' },
+    { id: 's23', club: 'slavia', number: 18, name: 'Adonija Ouanda', role: 'RW', optimalPositions: ['RW'], compatiblePositions: ['LW'], photo: 'img/slavia/ouanda.png' },
+    { id: 's24', club: 'slavia', number: 19, name: 'Oscar Dorley', role: 'DM', optimalPositions: ['DM', 'RB'], compatiblePositions: ['CM', 'RWB'], photo: 'img/slavia/dorley.png' },
+    { id: 's25', club: 'slavia', number: 20, name: 'Emmanuel Ayaosi', role: 'LW', optimalPositions: ['LW'], compatiblePositions: ['RW'], photo: 'img/slavia/ayaosi.png' },
+    { id: 's26', club: 'slavia', number: 22, name: 'Toumani Diakité', role: 'CM', optimalPositions: ['CM'], compatiblePositions: ['DM'], photo: 'img/slavia/diakite.png' },
+    { id: 's27', club: 'slavia', number: 23, name: 'Michal Sadílek', role: 'CM', optimalPositions: ['CM', 'DM'], compatiblePositions: [], photo: 'img/slavia/sadilek.png' },
+    { id: 's28', club: 'slavia', number: 26, name: 'Ivan Schranz', role: 'RW', optimalPositions: ['RW', 'LW'], compatiblePositions: ['OM', 'CF'], photo: 'img/slavia/schranz.png' },
+    { id: 's29', club: 'slavia', number: 30, name: 'Wiktor Nowak', role: 'OM', optimalPositions: ['OM'], compatiblePositions: ['CM'], photo: 'img/slavia/nowak.png' },
+    { id: 's30', club: 'slavia', number: 32, name: 'Pavel Kačor', role: 'RW', optimalPositions: ['RW'], compatiblePositions: ['LW'], photo: 'img/slavia/kacor.png' }
   ],
   'Útočníci': [
-    { id: 'p34', number: 15, name: 'Jonatan Braut Brunes', role: 'CF', optimalPositions: ['CF'], compatiblePositions: ['OM'], photo: 'img/brunes.webp' },
-    { id: 'p35', number: 29, name: 'Matyáš Vojta', role: 'CF', optimalPositions: ['CF'], compatiblePositions: [], photo: 'img/vojta.webp' }
+    { id: 'p34', club: 'sparta', number: 15, name: 'Jonatan Braut Brunes', role: 'CF', optimalPositions: ['CF'], compatiblePositions: ['OM'], photo: 'img/brunes.webp' },
+    { id: 'p35', club: 'sparta', number: 29, name: 'Matyáš Vojta', role: 'CF', optimalPositions: ['CF'], compatiblePositions: [], photo: 'img/vojta.webp' },
+    { id: 's31', club: 'slavia', number: 13, name: 'Mojmír Chytil', role: 'CF', optimalPositions: ['CF'], compatiblePositions: ['OM'], photo: 'img/slavia/chytil.png' },
+    { id: 's32', club: 'slavia', number: 25, name: 'Tomáš Chorý', role: 'CF', optimalPositions: ['CF'], compatiblePositions: ['OM'], photo: 'img/slavia/chory.png' }
   ]
 };
 
-const players = Object.values(playersByPosition)
-  .flat()
-  .map((player) => ({
-    ...player,
-    photo: player.photo || 'img/surovcik.webp'
-  }));
+const players = Object.values(playersByPosition).flat();

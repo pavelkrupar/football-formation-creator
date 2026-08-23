@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="cs">
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>AC Sparta Praha | Tactical Board</title>
+    <title>Football Formation Creator</title>
     <link rel="icon" type="image/svg+xml" href="favicon.svg" />
     <link rel="shortcut icon" href="favicon.svg" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -19,37 +19,36 @@
       <header class="topbar">
         <div class="brand-block">
           <div>
-            <p class="eyebrow">Tactical board</p>
-            <h1>AC Sparta Praha</h1>
+            <h1 id="app-title">Football Formation Creator</h1>
           </div>
         </div>
 
-        <div class="formation-picker" aria-label="Vyber formace">
-          <button class="formation-btn active" data-formation="4-3-3">4-3-3</button>
-          <button class="formation-btn" data-formation="4-4-2">4-4-2</button>
-          <button class="formation-btn" data-formation="3-4-3">3-4-3</button>
-          <button class="formation-btn" data-formation="4-2-3-1">4-2-3-1</button>
+        <div class="lang-picker" id="lang-picker" aria-label="Choose language">
+          <button class="lang-btn active" data-lang="en">EN</button>
+          <button class="lang-btn" data-lang="cs">CS</button>
         </div>
       </header>
 
       <main class="main-grid">
         <section class="pitch-panel">
           <div class="panel-header">
-            <div>
-              <p class="section-label">Rozestavení</p>
-              <h2 id="formation-name">4-3-3</h2>
+            <div class="formation-picker" id="formation-picker" aria-label="Choose formation">
+              <button class="formation-btn active" data-formation="4-3-3">4-3-3</button>
+              <button class="formation-btn" data-formation="4-4-2">4-4-2</button>
+              <button class="formation-btn" data-formation="3-4-3">3-4-3</button>
+              <button class="formation-btn" data-formation="4-2-3-1">4-2-3-1</button>
             </div>
 
             <div class="panel-header-actions">
               <div class="captain-picker-wrap">
-                <label class="captain-label" for="captain-select">Kapitán</label>
-                <select id="captain-select" class="captain-select" aria-label="Výběr kapitána týmu">
-                  <option value="">Vyber kapitána</option>
+                <label class="captain-label" id="captain-label" for="captain-select">Captain</label>
+                <select id="captain-select" class="captain-select" aria-label="Pick team captain">
+                  <option value="">Pick a captain</option>
                 </select>
               </div>
 
-              <button type="button" id="reset-lineup-btn" class="reset-btn" title="Odebrat všechny hráče ze sestavy">
-                Vymazat sestavu
+              <button type="button" id="reset-lineup-btn" class="reset-btn" title="Remove all players from the lineup">
+                Clear lineup
               </button>
             </div>
           </div>
@@ -70,15 +69,19 @@
         <aside class="players-panel">
           <div class="panel-header compact">
             <div>
-              <p class="section-label">Sestava</p>
-              <h2>Seznam hráčů</h2>
+              <p class="section-label" id="lineup-section-label">Lineup</p>
+              <h2 id="lineup-heading">Player list</h2>
             </div>
           </div>
+
+          <div id="club-filter" class="club-filter" role="group" aria-label="Team filter"></div>
 
           <div id="players-list" class="players-list" aria-live="polite"></div>
         </aside>
       </main>
     </div>
+
+    <footer class="app-footer" id="app-footer">Created by Pavel Krupař with Claude Code and GitHub Copilot</footer>
 
     <div id="drag-preview" class="drag-preview" aria-hidden="true">
       <img id="drag-preview-photo" class="drag-preview-photo" src="" alt="" />
@@ -86,6 +89,7 @@
     </div>
 
     <script src="data.js"></script>
+    <script src="i18n.js"></script>
     <script src="script.js"></script>
   </body>
 </html>
