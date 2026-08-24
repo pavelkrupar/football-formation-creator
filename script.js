@@ -831,7 +831,8 @@ document.addEventListener('click', (event) => {
 // ============================================================
 
 loadState();
-renderCoordinateGrid();
+// renderCoordinateGrid(); // hidden — X/Y grid was only a helper for placing new formation slots.
+// Uncomment when creating/adjusting a formation to see the coordinates again.
 syncFormationButtons();
 syncLangButtons();
 render();

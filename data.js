@@ -7,7 +7,8 @@
 
 const clubs = [
   { id: 'sparta', name: 'Sparta', logo: 'img/logos/sparta.svg' },
-  { id: 'slavia', name: 'Slavia', logo: 'img/logos/slavia.png' }
+  { id: 'slavia', name: 'Slavia', logo: 'img/logos/slavia.png' },
+  { id: 'viktoria', name: 'Viktoria', logo: 'img/logos/viktoria.png' }
 ];
 
 const formations = {
@@ -72,7 +73,11 @@ const playersByPosition = {
     { id: 's1', club: 'slavia', number: 1, name: 'Ondřej Kolář', role: 'GK', optimalPositions: ['GK'], compatiblePositions: ['GK'], photo: 'img/slavia/kolar.png', marketValue: 0.05 },
     { id: 's2', club: 'slavia', number: 29, name: 'Nazar Domchak', role: 'GK', optimalPositions: ['GK'], compatiblePositions: ['GK'], photo: 'img/slavia/domchak.png', marketValue: 4.0 },
     { id: 's3', club: 'slavia', number: 35, name: 'Jakub Markovič', role: 'GK', optimalPositions: ['GK'], compatiblePositions: ['GK'], photo: 'img/slavia/markovic.png', marketValue: 3.5 },
-    { id: 's4', club: 'slavia', number: 36, name: 'Jindřich Staněk', role: 'GK', optimalPositions: ['GK'], compatiblePositions: ['GK'], photo: 'img/slavia/stanek.png', marketValue: 2.0 }
+    { id: 's4', club: 'slavia', number: 36, name: 'Jindřich Staněk', role: 'GK', optimalPositions: ['GK'], compatiblePositions: ['GK'], photo: 'img/slavia/stanek.png', marketValue: 2.0 },
+    { id: 'v1', club: 'viktoria', number: 30, name: 'Viktor Baier', role: 'GK', optimalPositions: ['GK'], compatiblePositions: ['GK'], photo: 'img/viktoria/baier.png', marketValue: 0.65 },
+    { id: 'v2', club: 'viktoria', number: 1, name: 'Dominik Ťapaj', role: 'GK', optimalPositions: ['GK'], compatiblePositions: ['GK'], photo: 'img/viktoria/tapaj.png', marketValue: 0.4 },
+    { id: 'v3', club: 'viktoria', number: 13, name: 'Marián Tvrdoň', role: 'GK', optimalPositions: ['GK'], compatiblePositions: ['GK'], photo: 'img/viktoria/tvrdon.png', marketValue: 0.1 },
+    { id: 'v4', club: 'viktoria', number: 44, name: 'Florian Wiegele', role: 'GK', optimalPositions: ['GK'], compatiblePositions: ['GK'], photo: 'img/viktoria/wiegele.png', marketValue: 2.2 }
   ],
   'Obránci': [
     { id: 'p3', club: 'sparta', number: 2, name: 'Martin Suchomel', role: 'RB', optimalPositions: ['LB', 'RB', 'LWB', 'RWB'], compatiblePositions: ['LM', 'RM'], photo: 'img/sparta/suchomel.webp', marketValue: 0.9 },
@@ -96,7 +101,14 @@ const playersByPosition = {
     { id: 's13', club: 'slavia', number: 39, name: 'David Jurásek', role: 'LB', optimalPositions: ['LB', 'LWB'], compatiblePositions: ['LM'], photo: 'img/slavia/jurasek.png', marketValue: 5.0 },
     { id: 's14', club: 'slavia', number: 41, name: 'Sahmkou Camara', role: 'CB', optimalPositions: ['CB'], compatiblePositions: [], photo: 'img/slavia/camara.png', marketValue: 1.2 },
     { id: 's15', club: 'slavia', number: 42, name: 'Mikuláš Konečný', role: 'CB', optimalPositions: ['CB'], compatiblePositions: [], photo: 'img/slavia/konecny.png', marketValue: 2.5 },
-    { id: 's16', club: 'slavia', number: 43, name: 'Eliáš Piták', role: 'RB', optimalPositions: ['RB', 'RWB'], compatiblePositions: ['RM'], photo: 'img/slavia/pitak.png', marketValue: 0.5 }
+    { id: 's16', club: 'slavia', number: 43, name: 'Eliáš Piták', role: 'RB', optimalPositions: ['RB', 'RWB'], compatiblePositions: ['RM'], photo: 'img/slavia/pitak.png', marketValue: 0.5 },
+    { id: 'v5', club: 'viktoria', number: 14, name: 'Merchas Doski', role: 'LB', optimalPositions: ['LB'], compatiblePositions: ['LWB'], photo: 'img/viktoria/doski.png', marketValue: 1.7 },
+    { id: 'v6', club: 'viktoria', number: 40, name: 'Sampson Dweh', role: 'CB', optimalPositions: ['CB'], compatiblePositions: [], photo: 'img/viktoria/dweh.png', marketValue: 5.0 },
+    { id: 'v7', club: 'viktoria', number: 21, name: 'Václav Jemelka', role: 'CB', optimalPositions: ['CB'], compatiblePositions: [], photo: 'img/viktoria/jemelka.png', marketValue: 1.2 },
+    { id: 'v8', club: 'viktoria', number: 37, name: 'Dávid Krčík', role: 'CB', optimalPositions: ['CB'], compatiblePositions: [], photo: 'img/viktoria/krcik.png', marketValue: 1.7 },
+    { id: 'v9', club: 'viktoria', number: 22, name: 'Jan Paluška', role: 'CB', optimalPositions: ['CB'], compatiblePositions: ['RB'], photo: 'img/viktoria/paluska.png', marketValue: 3.0 },
+    { id: 'v10', club: 'viktoria', number: 98, name: 'Filip Prebsl', role: 'CB', optimalPositions: ['CB'], compatiblePositions: [], photo: 'img/viktoria/prebsl.png', marketValue: 0.9 },
+    { id: 'v11', club: 'viktoria', number: 5, name: 'Karel Spáčil', role: 'CB', optimalPositions: ['CB'], compatiblePositions: ['RB'], photo: 'img/viktoria/spacil.png', marketValue: 3.5 }
   ],
   'Záložníci': [
     { id: 'p13', club: 'sparta', number: 5, name: 'Santiago Eneme', role: 'CM', optimalPositions: ['CM'], compatiblePositions: ['OM', 'DM'], photo: 'img/sparta/eneme.webp', marketValue: 2.3 },
@@ -127,13 +139,29 @@ const playersByPosition = {
     { id: 's27', club: 'slavia', number: 23, name: 'Michal Sadílek', role: 'CM', optimalPositions: ['CM', 'DM'], compatiblePositions: [], photo: 'img/slavia/sadilek.png', marketValue: 8.0 },
     { id: 's28', club: 'slavia', number: 26, name: 'Ivan Schranz', role: 'RW', optimalPositions: ['RW', 'LW'], compatiblePositions: ['OM', 'CF'], photo: 'img/slavia/schranz.png', marketValue: 0.6 },
     { id: 's29', club: 'slavia', number: 30, name: 'Wiktor Nowak', role: 'OM', optimalPositions: ['OM'], compatiblePositions: ['CM'], photo: 'img/slavia/nowak.png', marketValue: 1.5 },
-    { id: 's30', club: 'slavia', number: 32, name: 'Pavel Kačor', role: 'RW', optimalPositions: ['RW'], compatiblePositions: ['LW'], photo: 'img/slavia/kacor.png', marketValue: 2.0 }
+    { id: 's30', club: 'slavia', number: 32, name: 'Pavel Kačor', role: 'RW', optimalPositions: ['RW'], compatiblePositions: ['LW'], photo: 'img/slavia/kacor.png', marketValue: 2.0 },
+    { id: 'v12', club: 'viktoria', number: 66, name: 'Sebastian Boháč', role: 'CM', optimalPositions: ['CM'], compatiblePositions: [], photo: 'img/viktoria/bohac.png', marketValue: 0.45 },
+    { id: 'v13', club: 'viktoria', number: 6, name: 'Lukáš Červ', role: 'CM', optimalPositions: ['CM'], compatiblePositions: ['DM'], photo: 'img/viktoria/cerv.png', marketValue: 6.0 },
+    { id: 'v14', club: 'viktoria', number: 17, name: 'Patrik Hrošovský', role: 'CM', optimalPositions: ['CM'], compatiblePositions: ['DM'], photo: 'img/viktoria/hrosovsky.png', marketValue: 1.3 },
+    { id: 'v15', club: 'viktoria', number: 18, name: 'Tomáš Ladra', role: 'OM', optimalPositions: ['OM'], compatiblePositions: ['CM'], photo: 'img/viktoria/ladra.png', marketValue: 1.3 },
+    { id: 'v16', club: 'viktoria', number: 99, name: 'Amar Memić', role: 'RM', optimalPositions: ['RM'], compatiblePositions: ['RWB', 'RB'], photo: 'img/viktoria/memic.png', marketValue: 4.5 },
+    { id: 'v17', club: 'viktoria', number: 20, name: 'Jiří Panoš', role: 'CM', optimalPositions: ['CM'], compatiblePositions: [], photo: 'img/viktoria/panos.png', marketValue: 1.8 },
+    { id: 'v18', club: 'viktoria', number: 36, name: 'Stefan Pirgić', role: 'CM', optimalPositions: ['CM'], compatiblePositions: ['DM'], photo: 'img/viktoria/pirgic.png', marketValue: 1.8 },
+    { id: 'v19', club: 'viktoria', number: 12, name: 'Alexandr Sojka', role: 'CM', optimalPositions: ['CM'], compatiblePositions: ['DM'], photo: 'img/viktoria/sojka.png', marketValue: 2.3 },
+    { id: 'v20', club: 'viktoria', number: 19, name: 'Cheick Souaré', role: 'LM', optimalPositions: ['LM'], compatiblePositions: ['LW'], photo: 'img/viktoria/souare.png', marketValue: 3.5 },
+    { id: 'v21', club: 'viktoria', number: 9, name: 'Denis Višinský', role: 'OM', optimalPositions: ['OM'], compatiblePositions: ['CM'], photo: 'img/viktoria/visinsky.png', marketValue: 3.0 }
   ],
   'Útočníci': [
     { id: 'p34', club: 'sparta', number: 15, name: 'Jonatan Braut Brunes', role: 'CF', optimalPositions: ['CF'], compatiblePositions: ['OM'], photo: 'img/sparta/brunes.webp', marketValue: 8.0 },
     { id: 'p35', club: 'sparta', number: 29, name: 'Matyáš Vojta', role: 'CF', optimalPositions: ['CF'], compatiblePositions: [], photo: 'img/sparta/vojta.webp', marketValue: 3.0 },
     { id: 's31', club: 'slavia', number: 13, name: 'Mojmír Chytil', role: 'CF', optimalPositions: ['CF'], compatiblePositions: ['OM'], photo: 'img/slavia/chytil.png', marketValue: 4.0 },
-    { id: 's32', club: 'slavia', number: 25, name: 'Tomáš Chorý', role: 'CF', optimalPositions: ['CF'], compatiblePositions: ['OM'], photo: 'img/slavia/chory.png', marketValue: 2.7 }
+    { id: 's32', club: 'slavia', number: 25, name: 'Tomáš Chorý', role: 'CF', optimalPositions: ['CF'], compatiblePositions: ['OM'], photo: 'img/slavia/chory.png', marketValue: 2.7 },
+    { id: 'v22', club: 'viktoria', number: 80, name: 'Prince Adu', role: 'CF', optimalPositions: ['CF'], compatiblePositions: ['LW'], photo: 'img/viktoria/adu.png', marketValue: 3.0 },
+    { id: 'v23', club: 'viktoria', number: 23, name: 'Baboucarr Faal', role: 'CF', optimalPositions: ['CF'], compatiblePositions: [], photo: 'img/viktoria/faal.png', marketValue: 2.5 },
+    { id: 'v24', club: 'viktoria', number: 25, name: 'Christophe Kabongo', role: 'CF', optimalPositions: ['CF'], compatiblePositions: [], photo: 'img/viktoria/kabongo.png', marketValue: 0.75 },
+    { id: 'v25', club: 'viktoria', number: 7, name: 'Salim Fago Lawal', role: 'CF', optimalPositions: ['CF'], compatiblePositions: ['LW', 'RW'], photo: 'img/viktoria/lawal.png', marketValue: 1.8 },
+    { id: 'v26', club: 'viktoria', number: 10, name: 'Mohamed Touré', role: 'CF', optimalPositions: ['CF'], compatiblePositions: ['RW'], photo: 'img/viktoria/toure.png', marketValue: 2.0 },
+    { id: 'v27', club: 'viktoria', number: 11, name: 'Matěj Vydra', role: 'CF', optimalPositions: ['CF'], compatiblePositions: [], photo: 'img/viktoria/vydra.png', marketValue: 0.6 }
   ]
 };
 
