@@ -21,6 +21,17 @@
           <div>
             <h1 id="app-title">Football Formation Creator</h1>
           </div>
+
+          <div class="league-picker" id="league-picker">
+            <button type="button" class="league-picker-toggle" id="league-picker-toggle" aria-haspopup="listbox" aria-expanded="false">
+              <img class="league-picker-logo" id="league-picker-logo" src="" alt="" />
+              <span class="league-picker-name" id="league-picker-name"></span>
+              <svg class="league-picker-caret" width="11" height="7" viewBox="0 0 11 7" fill="none" aria-hidden="true">
+                <path d="M1 1L5.5 5.5L10 1" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+            </button>
+            <div class="league-picker-menu" id="league-picker-menu" role="listbox" aria-label="Choose league"></div>
+          </div>
         </div>
 
         <div class="lang-picker" id="lang-picker" aria-label="Choose language">
@@ -52,9 +63,15 @@
               </div>
 
               <div class="captain-picker-wrap">
-                <select id="captain-select" class="captain-select" aria-label="Pick team captain">
-                  <option value="">Pick a captain</option>
-                </select>
+                <div class="captain-picker" id="captain-picker">
+                  <button type="button" class="captain-picker-toggle" id="captain-picker-toggle" aria-haspopup="listbox" aria-expanded="false">
+                    <span class="captain-picker-name" id="captain-picker-name">Pick a captain</span>
+                    <svg class="captain-picker-caret" width="11" height="7" viewBox="0 0 11 7" fill="none" aria-hidden="true">
+                      <path d="M1 1L5.5 5.5L10 1" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+                    </svg>
+                  </button>
+                  <div class="captain-picker-menu" id="captain-picker-menu" role="listbox" aria-label="Pick team captain"></div>
+                </div>
               </div>
 
               <button type="button" id="reset-lineup-btn" class="reset-btn" title="Remove all players from the lineup">
@@ -92,10 +109,13 @@
       </main>
     </div>
 
-    <footer class="app-footer" id="app-footer">Created by Pavel Krupař with Claude Code and GitHub Copilot</footer>
+    <footer class="app-footer">
+      <p class="app-disclaimer" id="app-disclaimer"></p>
+      <p class="app-credit" id="app-footer">Created by Pavel Krupař with Claude Code and GitHub Copilot</p>
+    </footer>
 
     <div id="drag-preview" class="drag-preview" aria-hidden="true">
-      <img id="drag-preview-photo" class="drag-preview-photo" src="" alt="" />
+      <img id="drag-preview-logo" class="drag-preview-logo" src="" alt="" />
       <span id="drag-preview-name" class="drag-preview-name"></span>
     </div>
 

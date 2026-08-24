@@ -13,9 +13,12 @@ let draggedPlayerId = null;
 let captainPlayerId = null;
 let selectedPlayerId = null;
 const slotAssignments = {};
-let selectedClubs = new Set(clubs.map((club) => club.id));
+let activeLeague = leagues[0]?.id ?? null;
+let selectedClubs = new Set(clubs.filter((club) => club.league === activeLeague).map((club) => club.id));
 let currentLanguage = DEFAULT_LANGUAGE;
 let searchQuery = '';
+let isLeagueMenuOpen = false;
+let isCaptainMenuOpen = false;
 
 const STORAGE_KEY = 'sparta-tactical-board:v1';
 
@@ -28,21 +31,30 @@ const fieldGrid = document.getElementById('field-grid');
 const playersList = document.getElementById('players-list');
 const formationButtons = document.querySelectorAll('.formation-btn');
 const formationPickerEl = document.getElementById('formation-picker');
-const captainSelect = document.getElementById('captain-select');
+const captainPickerEl = document.getElementById('captain-picker');
+const captainPickerToggle = document.getElementById('captain-picker-toggle');
+const captainPickerMenu = document.getElementById('captain-picker-menu');
+const captainPickerName = document.getElementById('captain-picker-name');
 const resetButton = document.getElementById('reset-lineup-btn');
 const generateButton = document.getElementById('generate-lineup-btn');
 const squadValueLabelEl = document.getElementById('squad-value-label');
 const squadValueEl = document.getElementById('squad-value');
 const dragPreview = document.getElementById('drag-preview');
-const dragPreviewPhoto = document.getElementById('drag-preview-photo');
+const dragPreviewLogo = document.getElementById('drag-preview-logo');
 const dragPreviewName = document.getElementById('drag-preview-name');
 const clubFilterEl = document.getElementById('club-filter');
 const playerSearchEl = document.getElementById('player-search');
 const appTitleEl = document.getElementById('app-title');
 const lineupHeadingEl = document.getElementById('lineup-heading');
 const appFooterEl = document.getElementById('app-footer');
+const appDisclaimerEl = document.getElementById('app-disclaimer');
 const langPickerEl = document.getElementById('lang-picker');
 const langButtons = document.querySelectorAll('.lang-btn');
+const leaguePickerEl = document.getElementById('league-picker');
+const leaguePickerToggle = document.getElementById('league-picker-toggle');
+const leaguePickerMenu = document.getElementById('league-picker-menu');
+const leaguePickerLogo = document.getElementById('league-picker-logo');
+const leaguePickerName = document.getElementById('league-picker-name');
 
 // ============================================================
 // Helpers
@@ -73,7 +85,22 @@ function normalizeForSearch(value) {
 function matchesSearchQuery(player) {
   const query = normalizeForSearch(searchQuery);
   if (!query) return true;
-  return normalizeForSearch(player.name).includes(query);
+
+  if (normalizeForSearch(player.name).includes(query)) return true;
+
+  // Also match by position code (role, e.g. "GK" finds all goalkeepers,
+  // plus every optimal/compatible position so e.g. "RM" also surfaces
+  // players who can merely play there).
+  const positions = [player.role, ...(player.optimalPositions || []), ...(player.compatiblePositions || [])];
+  return positions.some((position) => normalizeForSearch(position).includes(query));
+}
+
+function getLeagueById(leagueId) {
+  return leagues.find((league) => league.id === leagueId);
+}
+
+function getClubsForLeague(leagueId) {
+  return clubs.filter((club) => club.league === leagueId);
 }
 
 function getClubById(clubId) {
@@ -82,11 +109,6 @@ function getClubById(clubId) {
 
 function getPlayerClub(player) {
   return getClubById(player?.club) || clubs[0];
-}
-
-function getPlayerPhoto(player) {
-  // Players without a dedicated photo fall back to their club's logo.
-  return player?.photo || getPlayerClub(player).logo;
 }
 
 function getPositionDisplayName(position) {
@@ -257,10 +279,49 @@ function renderCoordinateGrid() {
   fieldGrid.innerHTML = lines.join('');
 }
 
+function renderLeaguePicker() {
+  if (!leaguePickerToggle || !leaguePickerMenu) return;
+
+  const activeLeagueData = getLeagueById(activeLeague);
+
+  if (leaguePickerLogo) {
+    leaguePickerLogo.src = activeLeagueData?.logo ?? '';
+    leaguePickerLogo.alt = activeLeagueData ? `${activeLeagueData.name} logo` : '';
+  }
+  if (leaguePickerName) leaguePickerName.textContent = activeLeagueData?.name ?? '';
+  if (leaguePickerToggle) leaguePickerToggle.setAttribute('aria-label', t('leaguePickerLabel'));
+  if (leaguePickerMenu) leaguePickerMenu.setAttribute('aria-label', t('leaguePickerLabel'));
+
+  leaguePickerMenu.innerHTML = leagues
+    .map((league) => {
+      const isActive = league.id === activeLeague;
+      return `
+        <button type="button" class="league-picker-option ${isActive ? 'active' : ''}" data-league-id="${league.id}" role="option" aria-selected="${isActive}">
+          <img class="league-picker-option-logo" src="${league.logo}" alt="" />
+          <span class="league-picker-option-name">${league.name}</span>
+        </button>
+      `;
+    })
+    .join('');
+}
+
+function setLeagueMenuOpen(open) {
+  isLeagueMenuOpen = open;
+  if (leaguePickerEl) leaguePickerEl.classList.toggle('open', open);
+  if (leaguePickerToggle) leaguePickerToggle.setAttribute('aria-expanded', String(open));
+}
+
 function renderClubFilter() {
   if (!clubFilterEl) return;
 
-  clubFilterEl.innerHTML = clubs
+  const leagueClubs = getClubsForLeague(activeLeague);
+
+  if (leagueClubs.length === 0) {
+    clubFilterEl.innerHTML = `<p class="club-filter-empty">${t('noLeagueTeams')}</p>`;
+    return;
+  }
+
+  clubFilterEl.innerHTML = leagueClubs
     .map((club) => {
       const checked = selectedClubs.has(club.id);
       return `
@@ -275,6 +336,11 @@ function renderClubFilter() {
 }
 
 function renderPlayers() {
+  if (selectedClubs.size === 0) {
+    playersList.innerHTML = `<p class="players-empty">${t('noLeagueTeams')}</p>`;
+    return;
+  }
+
   playersList.innerHTML = Object.entries(playersByPosition)
     .map(([groupLabel, groupPlayers]) => {
       const visiblePlayers = groupPlayers.filter((player) => selectedClubs.has(player.club) && matchesSearchQuery(player));
@@ -292,7 +358,7 @@ function renderPlayers() {
           return `
             <div class="player-card ${currentSlotId ? 'is-assigned' : ''} ${isSelected ? 'is-selected' : ''}" draggable="true" data-player-id="${player.id}">
               <div class="player-avatar">
-                <img src="${getPlayerPhoto(player)}" alt="${player.name}" />
+                <img src="${club.logo}" alt="${club.name} logo" draggable="false" />
               </div>
               <div class="player-meta">
                 <span class="player-name">${player.name}<span class="player-number">#${playerNumber}</span><span class="player-market-value">${formatMarketValue(player.marketValue)}</span></span>
@@ -300,7 +366,6 @@ function renderPlayers() {
               </div>
               <div class="player-side-actions">
                 <span class="assignment-chip">${slotLabel}</span>
-                <img class="roster-club-mark" src="${club.logo}" alt="${club.name} logo" />
               </div>
             </div>
           `;
@@ -330,20 +395,19 @@ function renderFormation() {
       const assignedPlayerId = slotAssignments[slot.id] || null;
       const assignedPlayer = assignedPlayerId ? getPlayerById(assignedPlayerId) : null;
       const playerLabel = assignedPlayer ? assignedPlayer.name.split(' ').slice(-1)[0] : '—';
-      const playerPhoto = assignedPlayer ? getPlayerPhoto(assignedPlayer) : '';
       const slotStatus = assignedPlayer ? getPlayerPositionStatus(assignedPlayer, slot.label) : 'empty';
       const slotDisplayLabel = getPositionDisplayName(slot.label);
       const isCaptain = Boolean(captainPlayerId && assignedPlayer && assignedPlayer.id === captainPlayerId);
-      const nameSizeClass = getSlotPlayerNameSizeClass(assignedPlayer?.name);
+      const nameSizeClass = getSlotPlayerNameSizeClass(playerLabel);
       const club = assignedPlayer ? getPlayerClub(assignedPlayer) : null;
 
       return `
         <div class="pitch-slot is-${slotStatus}" data-slot-id="${slot.id}" data-slot-label="${slot.label}" data-player-id="${assignedPlayer ? assignedPlayer.id : ''}" draggable="${assignedPlayer ? 'true' : 'false'}" style="left: ${slot.x}%; top: ${slot.y}%">
           ${isCaptain ? '<span class="captain-mark">C</span>' : ''}
-          ${assignedPlayer ? `<span class="club-mark"><img src="${club.logo}" alt="${club.name} logo" /></span>` : ''}
+          ${assignedPlayer && assignedPlayer.number != null ? `<span class="number-mark">${assignedPlayer.number}</span>` : ''}
           <span class="slot-label">${slotDisplayLabel}</span>
           <div class="slot-player ${nameSizeClass}">
-            ${assignedPlayer ? `<img class="slot-player-image" src="${playerPhoto}" alt="${assignedPlayer.name}" />` : ''}
+            ${club ? `<img class="slot-player-logo" src="${club.logo}" alt="${club.name} logo" draggable="false" />` : ''}
             <span class="slot-player-name">${playerLabel}</span>
           </div>
         </div>
@@ -353,7 +417,7 @@ function renderFormation() {
 }
 
 function renderCaptainSelector() {
-  if (!captainSelect) return;
+  if (!captainPickerToggle || !captainPickerMenu) return;
 
   const assignedPlayers = getAssignedPlayersForCurrentFormation();
 
@@ -361,23 +425,60 @@ function renderCaptainSelector() {
     captainPlayerId = null;
   }
 
+  captainPickerToggle.setAttribute('aria-label', t('captainSelectLabel'));
+  captainPickerMenu.setAttribute('aria-label', t('captainSelectLabel'));
+
+  const captainPlayer = captainPlayerId ? getPlayerById(captainPlayerId) : null;
+  if (captainPickerName) captainPickerName.textContent = captainPlayer ? captainPlayer.name : t('captainPlaceholder');
+
   if (assignedPlayers.length === 0) {
-    captainSelect.innerHTML = `<option value="">${t('captainPlaceholder')}</option><option value="" disabled>${t('captainEmptyOption')}</option>`;
-    captainSelect.disabled = true;
-    captainSelect.value = '';
+    captainPickerToggle.disabled = true;
+    captainPickerToggle.title = t('captainEmptyOption');
+    captainPickerMenu.innerHTML = '';
+    setCaptainMenuOpen(false);
     return;
   }
 
-  const options = [`<option value="">${t('captainPlaceholder')}</option>`].concat(
-    assignedPlayers.map((player) => {
-      const selected = captainPlayerId === player.id ? 'selected' : '';
-      return `<option value="${player.id}" ${selected}>${player.name}</option>`;
-    })
-  );
+  captainPickerToggle.disabled = false;
+  captainPickerToggle.title = '';
 
-  captainSelect.disabled = false;
-  captainSelect.innerHTML = options.join('');
-  captainSelect.value = captainPlayerId || '';
+  // Only offer a way to clear the captain when one is actually set —
+  // otherwise this entry would just repeat the toggle's own placeholder
+  // text right below it.
+  const clearOption = captainPlayerId
+    ? `
+      <button type="button" class="captain-picker-option is-placeholder" data-player-id="" role="option" aria-selected="false">
+        <span class="captain-picker-option-name">${t('captainClear')}</span>
+      </button>
+    `
+    : '';
+
+  const playerOptions = assignedPlayers
+    .map((player) => {
+      const isActive = captainPlayerId === player.id;
+      const club = getPlayerClub(player);
+      return `
+        <button type="button" class="captain-picker-option ${isActive ? 'active' : ''}" data-player-id="${player.id}" role="option" aria-selected="${isActive}">
+          <img class="captain-picker-option-logo" src="${club.logo}" alt="" />
+          <span class="captain-picker-option-name">${player.name}</span>
+        </button>
+      `;
+    })
+    .join('');
+
+  captainPickerMenu.innerHTML = clearOption + playerOptions;
+}
+
+function setCaptainMenuOpen(open) {
+  isCaptainMenuOpen = open;
+  if (captainPickerEl) captainPickerEl.classList.toggle('open', open);
+  if (captainPickerToggle) captainPickerToggle.setAttribute('aria-expanded', String(open));
+}
+
+function setCaptain(playerId) {
+  captainPlayerId = playerId || null;
+  setCaptainMenuOpen(false);
+  render();
 }
 
 function updateResetButtonState() {
@@ -408,7 +509,6 @@ function applyStaticText() {
     generateButton.title = t('generateButtonTitle');
   }
   if (squadValueLabelEl) squadValueLabelEl.textContent = t('squadValueLabel');
-  if (captainSelect) captainSelect.setAttribute('aria-label', t('captainSelectLabel'));
   if (resetButton) {
     resetButton.textContent = t('resetButton');
     resetButton.title = t('resetButtonTitle');
@@ -420,10 +520,15 @@ function applyStaticText() {
     playerSearchEl.placeholder = t('playerSearchPlaceholder');
   }
   if (appFooterEl) appFooterEl.textContent = t('footer');
+  // footerDisclaimer is a fixed array of two sentences (both from our own
+  // i18n.js, never user input) — joined with <br> so the second sentence
+  // always starts its own line instead of wherever the text happens to wrap.
+  if (appDisclaimerEl) appDisclaimerEl.innerHTML = t('footerDisclaimer').join('<br>');
 }
 
 function render() {
   applyStaticText();
+  renderLeaguePicker();
   renderClubFilter();
   renderFormation();
   renderPlayers();
@@ -479,6 +584,16 @@ function assignPlayerToSlot(playerId, targetSlotId) {
   }
 
   slotAssignments[targetSlotId] = playerId;
+  render();
+}
+
+function setActiveLeague(leagueId) {
+  if (leagueId === activeLeague || !getLeagueById(leagueId)) return;
+
+  activeLeague = leagueId;
+  selectedClubs = new Set(getClubsForLeague(activeLeague).map((club) => club.id));
+  pruneAssignmentsForClubFilter();
+  setLeagueMenuOpen(false);
   render();
 }
 
@@ -584,6 +699,7 @@ function saveState() {
       activeFormation,
       slotAssignments,
       captainPlayerId,
+      activeLeague,
       selectedClubs: [...selectedClubs],
       language: currentLanguage
     }));
@@ -607,12 +723,19 @@ function loadState() {
       currentLanguage = saved.language;
     }
 
-    if (Array.isArray(saved.selectedClubs)) {
-      const validClubIds = saved.selectedClubs.filter((clubId) => getClubById(clubId));
-      if (validClubIds.length > 0) {
-        selectedClubs = new Set(validClubIds);
-      }
+    if (saved.activeLeague && getLeagueById(saved.activeLeague)) {
+      activeLeague = saved.activeLeague;
     }
+
+    const validClubIds = Array.isArray(saved.selectedClubs)
+      ? saved.selectedClubs.filter((clubId) => {
+          const club = getClubById(clubId);
+          return club && club.league === activeLeague;
+        })
+      : [];
+    selectedClubs = new Set(
+      validClubIds.length > 0 ? validClubIds : getClubsForLeague(activeLeague).map((club) => club.id)
+    );
 
     const validSlotIds = new Set((formations[activeFormation] || []).map((slot) => slot.id));
     const usedPlayerIds = new Set();
@@ -659,10 +782,34 @@ formationButtons.forEach((button) => {
   });
 });
 
-if (captainSelect) {
-  captainSelect.addEventListener('change', (event) => {
-    captainPlayerId = event.target.value || null;
-    render();
+if (leaguePickerToggle) {
+  leaguePickerToggle.addEventListener('click', (event) => {
+    event.stopPropagation();
+    setLeagueMenuOpen(!isLeagueMenuOpen);
+  });
+}
+
+if (leaguePickerMenu) {
+  leaguePickerMenu.addEventListener('click', (event) => {
+    const option = event.target.closest('.league-picker-option');
+    if (!option) return;
+    setActiveLeague(option.dataset.leagueId);
+  });
+}
+
+if (captainPickerToggle) {
+  captainPickerToggle.addEventListener('click', (event) => {
+    event.stopPropagation();
+    if (captainPickerToggle.disabled) return;
+    setCaptainMenuOpen(!isCaptainMenuOpen);
+  });
+}
+
+if (captainPickerMenu) {
+  captainPickerMenu.addEventListener('click', (event) => {
+    const option = event.target.closest('.captain-picker-option');
+    if (!option) return;
+    setCaptain(option.dataset.playerId);
   });
 }
 
@@ -737,13 +884,14 @@ playersList.addEventListener('dragstart', (event) => {
   event.dataTransfer.effectAllowed = 'move';
   event.dataTransfer.setData('text/plain', draggedPlayerId);
 
-  // Drag a compact photo+name square instead of the browser's default
+  // Drag a compact logo+name square instead of the browser's default
   // snapshot of the whole (wide) player-card row — easier to aim at a
   // specific pitch slot.
   const player = getPlayerById(draggedPlayerId);
   if (player && dragPreview) {
-    dragPreviewPhoto.src = getPlayerPhoto(player);
-    dragPreviewPhoto.alt = player.name;
+    const club = getPlayerClub(player);
+    dragPreviewLogo.src = club.logo;
+    dragPreviewLogo.alt = `${club.name} logo`;
     dragPreviewName.textContent = player.name.split(' ').slice(-1)[0];
     event.dataTransfer.setDragImage(dragPreview, 32, 32);
   }
@@ -782,6 +930,11 @@ fieldPositions.addEventListener('dragstart', (event) => {
   slotEl.classList.add('is-dragging');
   event.dataTransfer.effectAllowed = 'move';
   event.dataTransfer.setData('text/plain', draggedPlayerId);
+
+  // Without this, grabbing the drag right on the club-logo <img> (which
+  // is natively draggable on its own) makes the browser preview just
+  // that image instead of the whole slot — name and number included.
+  event.dataTransfer.setDragImage(slotEl, slotEl.offsetWidth / 2, slotEl.offsetHeight / 2);
 });
 
 fieldPositions.addEventListener('dragend', (event) => {
@@ -820,10 +973,26 @@ fieldPositions.addEventListener('drop', (event) => {
 document.addEventListener('click', (event) => {
   const isPlayerCard = event.target.closest('.player-card');
   const isPitchSlot = event.target.closest('.pitch-slot');
+  const isLeaguePicker = event.target.closest('.league-picker');
+  const isCaptainPicker = event.target.closest('.captain-picker');
 
   if (!isPlayerCard && !isPitchSlot && selectedPlayerId) {
     clearSelectedPlayer();
   }
+
+  if (!isLeaguePicker && isLeagueMenuOpen) {
+    setLeagueMenuOpen(false);
+  }
+
+  if (!isCaptainPicker && isCaptainMenuOpen) {
+    setCaptainMenuOpen(false);
+  }
+});
+
+document.addEventListener('keydown', (event) => {
+  if (event.key !== 'Escape') return;
+  if (isLeagueMenuOpen) setLeagueMenuOpen(false);
+  if (isCaptainMenuOpen) setCaptainMenuOpen(false);
 });
 
 // ============================================================
