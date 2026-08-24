@@ -30,6 +30,9 @@ const formationButtons = document.querySelectorAll('.formation-btn');
 const formationPickerEl = document.getElementById('formation-picker');
 const captainSelect = document.getElementById('captain-select');
 const resetButton = document.getElementById('reset-lineup-btn');
+const generateButton = document.getElementById('generate-lineup-btn');
+const squadValueLabelEl = document.getElementById('squad-value-label');
+const squadValueEl = document.getElementById('squad-value');
 const dragPreview = document.getElementById('drag-preview');
 const dragPreviewPhoto = document.getElementById('drag-preview-photo');
 const dragPreviewName = document.getElementById('drag-preview-name');
@@ -45,11 +48,7 @@ const langButtons = document.querySelectorAll('.lang-btn');
 // Helpers
 // ============================================================
 
-const sortPlayersByNumber = (groupPlayers) => [...groupPlayers].sort((a, b) => {
-  const numberA = Number(a.number ?? Number.MAX_SAFE_INTEGER);
-  const numberB = Number(b.number ?? Number.MAX_SAFE_INTEGER);
-  return numberA - numberB;
-});
+const sortPlayersByValue = (groupPlayers) => [...groupPlayers].sort((a, b) => (b.marketValue ?? 0) - (a.marketValue ?? 0));
 
 function normalizePosition(position) {
   return String(position || '').trim().toUpperCase();
@@ -111,6 +110,13 @@ function getPlayerRoleSummary(player) {
   if (secondary.length === 0) return primaryLabel;
 
   return `${primaryLabel} (${secondary.map(getPositionDisplayName).join(', ')})`;
+}
+
+function formatMarketValue(value) {
+  if (typeof value !== 'number') return '';
+  // Trim to at most 2 decimals without trailing zeros (1.80 -> 1.8, 10.00 -> 10).
+  const trimmed = Number(value.toFixed(2));
+  return `€${trimmed}M`;
 }
 
 function getSlotPlayerNameSizeClass(name) {
@@ -274,7 +280,7 @@ function renderPlayers() {
       const visiblePlayers = groupPlayers.filter((player) => selectedClubs.has(player.club) && matchesSearchQuery(player));
       if (visiblePlayers.length === 0) return '';
 
-      const sortedGroupPlayers = sortPlayersByNumber(visiblePlayers);
+      const sortedGroupPlayers = sortPlayersByValue(visiblePlayers);
       const items = sortedGroupPlayers
         .map((player) => {
           const currentSlotId = findPlayerSlot(player.id);
@@ -289,7 +295,7 @@ function renderPlayers() {
                 <img src="${getPlayerPhoto(player)}" alt="${player.name}" />
               </div>
               <div class="player-meta">
-                <span class="player-name">${player.name}<span class="player-number">#${playerNumber}</span></span>
+                <span class="player-name">${player.name}<span class="player-number">#${playerNumber}</span><span class="player-market-value">${formatMarketValue(player.marketValue)}</span></span>
                 <span class="player-role">${getPlayerRoleSummary(player)}</span>
               </div>
               <div class="player-side-actions">
@@ -379,6 +385,17 @@ function updateResetButtonState() {
   resetButton.disabled = !Object.values(slotAssignments).some(Boolean);
 }
 
+function getSquadValue() {
+  return Object.values(slotAssignments)
+    .filter(Boolean)
+    .reduce((total, playerId) => total + (getPlayerById(playerId)?.marketValue ?? 0), 0);
+}
+
+function renderSquadValue() {
+  if (!squadValueEl) return;
+  squadValueEl.textContent = formatMarketValue(getSquadValue());
+}
+
 function applyStaticText() {
   document.documentElement.lang = currentLanguage;
   document.title = t('appName');
@@ -386,6 +403,11 @@ function applyStaticText() {
   if (appTitleEl) appTitleEl.textContent = t('appName');
   if (formationPickerEl) formationPickerEl.setAttribute('aria-label', t('formationPickerLabel'));
   if (langPickerEl) langPickerEl.setAttribute('aria-label', t('languagePickerLabel'));
+  if (generateButton) {
+    generateButton.textContent = t('generateButton');
+    generateButton.title = t('generateButtonTitle');
+  }
+  if (squadValueLabelEl) squadValueLabelEl.textContent = t('squadValueLabel');
   if (captainSelect) captainSelect.setAttribute('aria-label', t('captainSelectLabel'));
   if (resetButton) {
     resetButton.textContent = t('resetButton');
@@ -406,6 +428,7 @@ function render() {
   renderFormation();
   renderPlayers();
   renderCaptainSelector();
+  renderSquadValue();
   updateResetButtonState();
   saveState();
 }
@@ -474,6 +497,75 @@ function resetLineup() {
   });
   captainPlayerId = null;
   selectedPlayerId = null;
+  render();
+}
+
+const COMPATIBLE_SLOT_VALUE_PENALTY = 0.8; // a "yellow" fit counts for 80% of a player's value
+
+function generateLineup() {
+  const slots = formations[activeFormation] || [];
+  if (slots.length === 0) return;
+
+  const candidates = players.filter((player) => selectedClubs.has(player.club));
+
+  const assignment = {};
+  const usedPlayerIds = new Set();
+
+  // Every player/slot pair where the player is at least "compatible"
+  // (yellow) competes on an effective value: full value for an "optimal"
+  // (green) fit, 80% of it for a merely compatible one. Ranking all pairs
+  // together — rather than filling every optimal slot before considering
+  // any compatible one — lets a strong player's compatible position
+  // outbid a much weaker player's optimal one when that's the better deal,
+  // instead of that strong player missing out entirely because their one
+  // optimal position wasn't free.
+  const rankedPairs = [];
+  candidates.forEach((player) => {
+    const value = player.marketValue ?? 0;
+    slots.forEach((slot) => {
+      const status = getPlayerPositionStatus(player, slot.label);
+      if (status === 'optimal') {
+        rankedPairs.push({ player, slot, effectiveValue: value });
+      } else if (status === 'compatible') {
+        rankedPairs.push({ player, slot, effectiveValue: value * COMPATIBLE_SLOT_VALUE_PENALTY });
+      }
+    });
+  });
+
+  rankedPairs.sort((a, b) => b.effectiveValue - a.effectiveValue);
+
+  rankedPairs.forEach(({ player, slot }) => {
+    if (usedPlayerIds.has(player.id) || assignment[slot.id]) return;
+    assignment[slot.id] = player.id;
+    usedPlayerIds.add(player.id);
+  });
+
+  // Fallback: fill any still-empty slots with the strongest remaining
+  // players regardless of position fit, so the lineup is always complete.
+  const remainingByValueDesc = candidates
+    .filter((player) => !usedPlayerIds.has(player.id))
+    .sort((a, b) => (b.marketValue ?? 0) - (a.marketValue ?? 0));
+
+  remainingByValueDesc.forEach((player) => {
+    const targetSlot = slots.find((slot) => !assignment[slot.id]);
+    if (!targetSlot) return;
+    assignment[targetSlot.id] = player.id;
+    usedPlayerIds.add(player.id);
+  });
+
+  Object.keys(slotAssignments).forEach((slotId) => {
+    delete slotAssignments[slotId];
+  });
+  Object.assign(slotAssignments, assignment);
+
+  // Hand the armband to the most valuable player in the generated lineup.
+  const assignedPlayers = candidates.filter((player) => usedPlayerIds.has(player.id));
+  const mostValuablePlayer = assignedPlayers.reduce(
+    (best, player) => (!best || (player.marketValue ?? 0) > (best.marketValue ?? 0) ? player : best),
+    null
+  );
+  captainPlayerId = mostValuablePlayer ? mostValuablePlayer.id : null;
+
   render();
 }
 
@@ -579,6 +671,12 @@ if (resetButton) {
     if (!Object.values(slotAssignments).some(Boolean)) return;
     if (!window.confirm(t('resetConfirm'))) return;
     resetLineup();
+  });
+}
+
+if (generateButton) {
+  generateButton.addEventListener('click', () => {
+    generateLineup();
   });
 }
 

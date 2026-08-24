@@ -32,14 +32,25 @@
       <main class="main-grid">
         <section class="pitch-panel">
           <div class="panel-header">
-            <div class="formation-picker" id="formation-picker" aria-label="Choose formation">
-              <button class="formation-btn active" data-formation="4-3-3">4-3-3</button>
-              <button class="formation-btn" data-formation="4-4-2">4-4-2</button>
-              <button class="formation-btn" data-formation="3-4-3">3-4-3</button>
-              <button class="formation-btn" data-formation="4-2-3-1">4-2-3-1</button>
+            <div class="formation-controls">
+              <div class="formation-picker" id="formation-picker" aria-label="Choose formation">
+                <button class="formation-btn active" data-formation="4-3-3">4-3-3</button>
+                <button class="formation-btn" data-formation="4-4-2">4-4-2</button>
+                <button class="formation-btn" data-formation="3-4-3">3-4-3</button>
+                <button class="formation-btn" data-formation="4-2-3-1">4-2-3-1</button>
+              </div>
+
+              <button type="button" id="generate-lineup-btn" class="generate-btn" title="Auto-fill the strongest possible lineup">
+                Generate lineup
+              </button>
             </div>
 
             <div class="panel-header-actions">
+              <div class="squad-value-wrap">
+                <p class="squad-value-label" id="squad-value-label">Value</p>
+                <span class="squad-value" id="squad-value">€0M</span>
+              </div>
+
               <div class="captain-picker-wrap">
                 <select id="captain-select" class="captain-select" aria-label="Pick team captain">
                   <option value="">Pick a captain</option>
